@@ -2,46 +2,73 @@ import { FastifyInstance } from "fastify"
 import { z } from "zod"
 import { knex } from "../database"
 import { randomUUID } from "node:crypto"
+import { checkSessionIdExists } from "../midllewares/check-session-id-exist"
+
 
 
 export async function transactionsRoutes(app: FastifyInstance) {  //todao puglin do fastify precisa de uma função async
     //vai puxar as informaçoes do banco de dados
-    app.get('/', async (request, reply) => {
-        const sessionId = request.cookies.sessionId
+    app.get(
+        '/',
+        {
+            preHandler: [checkSessionIdExists],
+        },
+        async (request) => {
+            const { sessionId } = request.cookies //vai pegar o sessionId do cookie
 
-        if (!sessionId) {
-            return reply.status(401).send({
-                error: 'Unauthorized.',
-            })
-        }
 
-        const transactions = await knex('transactions')
-        .where('session_id', sessionId) //vai pegar as informaçoes do banco onde o session_id for igual ao sessionId
-        .select()
-        //vai retornar as informaçoes do banco de dados
 
-        return { transactions }
-    })
+            const transactions = await knex('transactions')
+                .where('session_id', sessionId)
+                .select()
+            //vai retornar as informaçoes do banco de dados
 
-    app.get('/:id', async (request) => { //nesse Get vamos colocar o id do usuario na rota do insomnia para informacoes das transacoes
-        const getTransactionsParamsSchema = z.object({
-            id: z.string().uuid(),
+            return { transactions }
         })
 
-        const { id } = getTransactionsParamsSchema.parse(request.params)
+    app.get(
+        '/:id',
+        {
+            preHandler: [checkSessionIdExists],
+        },
+        async (request) => {
+            const getTransactionsParamsSchema = z.object({
+                id: z.string().uuid(),
+            })
 
-        const transaction = await knex('transactions').where('id', id).first()
+            const { id } = getTransactionsParamsSchema.parse(request.params)
+            //vai pegar o id do usuario da rota do insomnia 
+            const { sessionId } = request.cookies //vai pegar o sessionId do cookie
 
-        return {
-            transaction,
-        }
-    })
+            const transaction = await knex('transactions')
+                .where({
+                    session_id: sessionId,
+                    id,
+                })
+                .first()
 
-    app.get('/summary', async () => {
-        const summary = await knex('transactions').sum('amount', { as: 'amount' }).first()
+            return {
+                transaction,
+            }
+        },
+    )
 
-        return summary
-    })
+    app.get(
+        '/summary',
+        {
+            preHandler: [checkSessionIdExists],
+        },
+        async (request) => {
+            const { sessionId } = request.cookies
+
+            const summary = await knex('transactions')
+                .where('session_id', sessionId)
+                .sum('amount', { as: 'amount' })
+                .first()
+
+            return { summary }
+        },
+    )
 
     app
         .post('/', async (request, reply) => {
@@ -58,10 +85,11 @@ export async function transactionsRoutes(app: FastifyInstance) {  //todao puglin
             let sessionId = request.cookies.sessionId
 
             if (!sessionId) {
-                sessionId = randomUUID() //se nao tiver o sessionId, vai criar um novo, para o usuario e vai consumir a informacoes primaria do usuario
-                reply.cookie(sessionId, sessionId, {
-                    path: '/', //cookie vai ser valido para toda a aplicaçao
-                    maxAge: 60 * 60 * 24 * 7, // informando quantos dias o cookie vai esta sendo validado, apos esses dias, sera apagado
+                sessionId = randomUUID()
+
+                reply.setCookie('sessionId', sessionId, {
+                    path: '/',
+                    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
                 })
             }
 
@@ -69,9 +97,9 @@ export async function transactionsRoutes(app: FastifyInstance) {  //todao puglin
                 id: randomUUID(),
                 title,
                 amount: type === 'credit' ? amount : amount * -1,
-                session_id: sessionId
+                session_id: sessionId,
             })
 
-            return reply.status(201).send
+            return reply.status(201).send()
         })
 }
