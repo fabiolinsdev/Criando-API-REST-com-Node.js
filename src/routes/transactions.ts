@@ -6,8 +6,13 @@ import { checkSessionIdExists } from "../midllewares/check-session-id-exist"
 
 
 
-export async function transactionsRoutes(app: FastifyInstance) {  //todao puglin do fastify precisa de uma função async
+export async function transactionsRoutes(app: FastifyInstance) { 
+     //todao puglin do fastify precisa de uma função async
     //vai puxar as informaçoes do banco de dados
+    app.addHook('preHandler', async (request, reoly) => {
+        console.log(`[${ request.method}] ${request.url}`)
+    }) // addHook ele nao precisa de um return, ele nao vai chamar as demais rotas, a nao ser a transactions..
+    //caso queira que ele chame em todas as rotas Globais, e preciso levar o addHook para o modulo server.ts 
     app.get(
         '/',
         {
