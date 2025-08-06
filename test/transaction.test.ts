@@ -44,7 +44,7 @@ describe('transactions routes', () => {
             expect.objectContaining({
                 title: 'New transaction',
                 amount: 5000,
-            }),
+            })
         ])    
     })
 })
