@@ -1,8 +1,13 @@
-db/app.db,
+#DATABASE=BANCO
+db/*.db,
+
+#MINHAS DEPENDENCIAS
 node_modules
+
+#MINHAS CONFIGURAÇOES 
 package-lock.json
 package.json
-tsconfig.json
-esintrc.json
+
+#variáveis de ambiente 
 .env
 .env.test

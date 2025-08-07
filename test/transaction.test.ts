@@ -14,7 +14,7 @@ describe('transactions routes', () => {
         await app.close()
     })
 
-    beforeEach(() => {
+    beforeEach(() => { 
         execSync('npm run knex migrate:rollback --all')
         execSync('npm run knex migrate:latest')
     })
@@ -42,9 +42,9 @@ describe('transactions routes', () => {
         const cookie = createTransactionResponse.get('set-Cookie')
 
         const listTransactionsResponse = await request(app.server)
-        get('/transactions')
-        set('Cookie', cookies)
-        expect(200)  
+            .get('/transactions')
+            .set('Cookie', cookies)
+        expect(200)
 
         expect(listTransactionsResponse.body.transactions).toEqual([
             expect.objectContaining({
@@ -55,7 +55,7 @@ describe('transactions routes', () => {
     })
 
 
-     test('deve ser capaz de obter uma transação específica', async () => {
+    test('deve ser capaz de obter uma transação específica', async () => {
         const createTransactionResponse = await request(app.server)
             .post('/transactions')
             .send({
@@ -67,16 +67,16 @@ describe('transactions routes', () => {
         const cookies = createTransactionResponse.get('set-Cookie')
 
         const listTransactionsResponse = await request(app.server)
-            .get('/transactions' )
+            .get('/transactions')
             .set('Cookie', cookies)
-            .expect(200)  
+            .expect(200)
 
         const transactionId = listTransactionsResponse.body.transactions[0]
 
         const getTransactionsResponse = await request(app.server)
             .get(`/transactions/${transactionId}`)
             .set('Cookie', cookies)
-            .expect(200) 
+            .expect(200)
 
         expect(getTransactionsResponse.body.transaction).toEqual(
             expect.objectContaining({
@@ -100,16 +100,16 @@ describe('transactions routes', () => {
             .post('/transactions')
             .set('Cookie', cookies)
             .send({
-            title: 'debit transaction',
-            amount: 2000,
-            type: 'debit'
+                title: 'debit transaction',
+                amount: 2000,
+                type: 'debit'
             })
 
 
         const summaryResponse = await request(app.server)
             .get('/transactions/summary')
             .set('Cookie', cookies)
-            .expect(200)  
+            .expect(200)
 
         expect(summaryResponse.body.summary).toEqual({
             amount: 3000,
